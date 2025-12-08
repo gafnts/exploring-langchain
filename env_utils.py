@@ -1,6 +1,8 @@
 # env_utils.py
 import os
+
 from dotenv import dotenv_values
+
 
 def summarize_value(value: str) -> str:
     """Return masked form: ****last4 or boolean string."""
@@ -8,6 +10,7 @@ def summarize_value(value: str) -> str:
     if lower in ("true", "false"):
         return lower
     return "****" + value[-4:] if len(value) > 4 else "****" + value
+
 
 def doublecheck_env(file_path: str):
     """Check environment variables against a .env file and print summaries."""
@@ -26,20 +29,22 @@ def doublecheck_env(file_path: str):
             print(f"{key}=<not set>")
 
 
-
-
 # ========== utility to check packages and python based on pyproject.toml  =====================================
 
 # Requires: pip install packaging
-import sys, tomllib
-from pathlib import Path
+import sys
+import tomllib
 from importlib import metadata
+from pathlib import Path
+
 from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
+
 def _fmt_row(cols, widths):
     return " | ".join(str(c).ljust(w) for c, w in zip(cols, widths))
+
 
 def doublecheck_pkgs(pyproject_path="pyproject.toml", verbose=False):
     p = Path(pyproject_path)
@@ -53,7 +58,9 @@ def doublecheck_pkgs(pyproject_path="pyproject.toml", verbose=False):
     project = data.get("project", {})
     python_spec_str = project.get("requires-python") or ">=3.11"
 
-    py_ver = Version(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+    py_ver = Version(
+        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
     py_ok = py_ver in SpecifierSet(python_spec_str)
 
     # Load deps (PEP 621)
@@ -61,7 +68,9 @@ def doublecheck_pkgs(pyproject_path="pyproject.toml", verbose=False):
     if not deps:
         if verbose or not py_ok:
             print("No [project].dependencies found in pyproject.toml.")
-            print(f"Python {py_ver} {'satisfies' if py_ok else 'DOES NOT satisfy'} requires-python: {python_spec_str}")
+            print(
+                f"Python {py_ver} {'satisfies' if py_ok else 'DOES NOT satisfy'} requires-python: {python_spec_str}"
+            )
             print(f"Executable: {sys.executable}")
         return None
 
@@ -76,7 +85,13 @@ def doublecheck_pkgs(pyproject_path="pyproject.toml", verbose=False):
         except Exception:
             name, spec = dep, "(unparsed)"
 
-        rec = {"package": name, "required": spec, "installed": "-", "path": "-", "status": "❌ Missing"}
+        rec = {
+            "package": name,
+            "required": spec,
+            "installed": "-",
+            "path": "-",
+            "status": "❌ Missing",
+        }
 
         try:
             installed_ver = metadata.version(name)
@@ -107,17 +122,33 @@ def doublecheck_pkgs(pyproject_path="pyproject.toml", verbose=False):
     should_print = verbose or (not py_ok) or bool(problems)
     if should_print:
         # Python status
-        print(f"Python {py_ver} {'satisfies' if py_ok else 'DOES NOT satisfy'} requires-python: {python_spec_str}")
+        print(
+            f"Python {py_ver} {'satisfies' if py_ok else 'DOES NOT satisfy'} requires-python: {python_spec_str}"
+        )
 
         # Table (no hints column)
         headers = ["package", "required", "installed", "status", "path"]
+
         def short_path(s, maxlen=80):
             s = str(s)
-            return s if len(s) <= maxlen else ("…" + s[-(maxlen-1):])
-        rows = [[r["package"], r["required"], r["installed"], r["status"], short_path(r["path"])] for r in results]
-        widths = [max(len(h), *(len(str(row[i])) for row in rows)) for i, h in enumerate(headers)]
+            return s if len(s) <= maxlen else ("…" + s[-(maxlen - 1) :])
+
+        rows = [
+            [
+                r["package"],
+                r["required"],
+                r["installed"],
+                r["status"],
+                short_path(r["path"]),
+            ]
+            for r in results
+        ]
+        widths = [
+            max(len(h), *(len(str(row[i])) for row in rows))
+            for i, h in enumerate(headers)
+        ]
         print(_fmt_row(headers, widths))
-        print(_fmt_row(["-"*w for w in widths], widths))
+        print(_fmt_row(["-" * w for w in widths], widths))
         for row in rows:
             print(_fmt_row(row, widths))
 
@@ -125,7 +156,9 @@ def doublecheck_pkgs(pyproject_path="pyproject.toml", verbose=False):
         if problems:
             print("\nIssues detected:")
             for r in problems:
-                print(f"- {r['package']}: {r['status']} (required {r['required']}, installed {r['installed']}, path {r['path']})")
+                print(
+                    f"- {r['package']}: {r['status']} (required {r['required']}, installed {r['installed']}, path {r['path']})"
+                )
 
         if verbose or problems or not py_ok:
             print("\nEnvironment:")
