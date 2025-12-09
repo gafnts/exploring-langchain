@@ -48,6 +48,7 @@ lint.ignore = [
     "D101",  # ignore docstring for these labs
     "D103",  # ignore docstring for these labs
     "D202",  # ignore extra space after docstring requirement
+    "I001",  # ignore isort import sorting order
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -55,4 +56,3 @@ lint.ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
-
